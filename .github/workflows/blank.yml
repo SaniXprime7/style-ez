@@ -1,0 +1,46 @@
+
+name: Build Style Ez APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check project files
+        run: |
+          echo "Checking repository contents"
+          ls -la
+          find . -maxdepth 3 -type f | head -200
+
+      - name: Build APK if Gradle project exists
+        run: |
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            echo "No Gradle wrapper found. Android source project is required."
+            exit 1
+          fi
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Style-Ez-APK
+          path: '**/build/outputs/apk/debug/*.apk'
+          if-no-files-found: error
